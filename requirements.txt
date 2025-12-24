@@ -1,0 +1,29 @@
+# Core Instagram automation
+instagrapi==1.17.0
+instaloader
+
+# Media processing
+pillow
+moviepy
+opencv-python
+numpy
+pydub
+
+# Utilities
+requests
+python-dotenv
+python-dateutil
+dateparser
+tqdm
+aiohttp
+
+# Streamlit UI
+streamlit
+
+# AI Model SDKs (used in feature4_engine.py)
+openai
+google-generativeai
+groq
+
+# Optional: To avoid SSL errors on some machines
+urllib3
