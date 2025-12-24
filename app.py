@@ -3,8 +3,27 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-
+import os
 import streamlit as st
+
+def show_downloaded_posts():
+    st.subheader("📥 Downloaded Instagram Posts")
+
+    files = [f for f in os.listdir(".") if f.endswith(".mp4")]
+
+    if not files:
+        st.warning("No downloaded posts found")
+        return
+
+    for file in sorted(files, reverse=True):
+        st.markdown(f"**{file}**")
+
+        col1, col2, col3 = st.columns([1,2,1])
+        with col2:
+            st.video(file)
+
+        st.divider()
+
 
 # ==========================
 # CONFIG
@@ -260,6 +279,7 @@ page = st.sidebar.radio(
     "Navigate",
     [
         "Dashboard",
+        "📥 Downloaded Posts",
         "1) Download & Filter",
         "2) Watermark",
         "3) AI Generation",
@@ -285,10 +305,16 @@ running_jobs = sum(1 for j in jobs if j.get("status") == "running")
 failed_jobs = sum(1 for j in jobs if j.get("status") == "failed")
 done_jobs = sum(1 for j in jobs if j.get("status") == "done")
 
+
 # ==========================
 # PAGE: DASHBOARD
 # ==========================
+
+
+
 st.markdown("### 🔍 Fetch Instagram Posts")
+
+
 
 target_username = st.text_input(
     "Instagram username (posts fetch cheyyadaniki)",
@@ -305,6 +331,7 @@ if st.button("📥 Fetch My Instagram Posts"):
             SCRIPTS["fetch_medias"],
             args=[target_username]
         )
+
 
 
 if page == "Dashboard":
@@ -365,6 +392,12 @@ if page == "Dashboard":
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
+
+elif page == "📥 Downloaded Posts":
+    st.markdown("## 📥 Downloaded Instagram Posts")
+    show_downloaded_posts()
+    
+
 
     # Pipeline visualization
     st.markdown(
@@ -443,6 +476,8 @@ if page == "Dashboard":
                 """,
                 unsafe_allow_html=True,
             )
+
+
 
 # ==========================
 # 1) DOWNLOAD & FILTER
