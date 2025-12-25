@@ -1,6 +1,6 @@
 from instagrapi import Client
 
-USERNAME = "your_username"
+USERNAME = ""
 
 cl = Client()
 cl.load_settings("session.json")

@@ -317,14 +317,14 @@ st.markdown("### 🔍 Fetch Instagram Posts")
 
 
 target_username = st.text_input(
-    "Instagram username (posts fetch cheyyadaniki)",
+    "Instagram username (posts fetch",
     placeholder="example: natgeo"
 )
 
 
 if st.button("📥 Fetch My Instagram Posts"):
     if not target_username.strip():
-        st.error("❌ Username enter cheyyandi")
+        st.error("❌ Username enter")
     else:
         run_script(
             "Fetch Instagram Posts",
