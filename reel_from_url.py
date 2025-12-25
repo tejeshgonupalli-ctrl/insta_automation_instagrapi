@@ -1,6 +1,6 @@
 import yt_dlp
 
-def download_reel(url, output="posts/reel.mp4"):
+def download_reel(url, output="posts/reel1.mp4"):
     ydl_opts = {
         "outtmpl": output,
         "quiet": False
@@ -12,6 +12,6 @@ def download_reel(url, output="posts/reel.mp4"):
 
 # -------- RUN DIRECTLY --------
 if __name__ == "__main__":
-    REEL_URL = "https://www.instagram.com/p/DSnm06fEnO2/"
+    REEL_URL = "https://www.instagram.com/reel/DSFS-pdkiki/"
     download_reel(REEL_URL)
     print("✅ Reel downloaded successfully")

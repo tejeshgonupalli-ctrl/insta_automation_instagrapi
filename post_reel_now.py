@@ -1,7 +1,7 @@
 from instagrapi import Client
 
 SESSION_FILE = "session_account3.json"
-REEL_PATH = "posts/reel.mp4"
+REEL_PATH = "posts/reel1.mp4"
 
 CAPTION = """🔥 Reposted Reel
 Follow for more
