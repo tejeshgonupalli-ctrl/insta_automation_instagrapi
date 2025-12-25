@@ -35,3 +35,4 @@ def add_watermark(input_video, output_video, username):
 
     cap.release()
     out.release()
+
