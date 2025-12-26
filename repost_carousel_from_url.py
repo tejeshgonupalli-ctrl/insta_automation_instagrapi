@@ -3,7 +3,7 @@ import shutil
 from instagrapi import Client
 
 SESSION_FILE = "session_account3.json"
-CAROUSEL_URL = "https://www.instagram.com/p/DSDWDYOkkFg/"
+CAROUSEL_URL = "https://www.instagram.com/p/DRyowViDPM1/"
 CAPTION = "🔁 Reposted Carousel"
 
 DOWNLOAD_DIR = "downloads"

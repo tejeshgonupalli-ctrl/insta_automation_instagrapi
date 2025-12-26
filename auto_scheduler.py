@@ -2,75 +2,93 @@ from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 from instagrapi import Client
 
-cl = Client()
-cl.load_settings("session_account3.json")
-print("✅ Session loaded")
-
 scheduler = BlockingScheduler()
-# -------- POST FUNCTIONS -------- #
 
-def post_image(path, caption):
+def get_client(session_file):
+    cl = Client()
+    cl.load_settings(session_file)
+
+    try:
+        cl.get_timeline_feed()   # 🔥 SESSION REFRESH
+    except:
+        raise Exception(f"❌ Session expired: {session_file}")
+
+    return cl
+
+
+# -------- POST FUNCTIONS (PER ACCOUNT) -------- #
+
+
+def post_image(session_file, path, caption):
+    cl = get_client(session_file)
     cl.photo_upload(path, caption)
-    print("✅ Image posted")
+    print(f"✅ Image posted from {session_file}")
 
-def post_reel(path, caption):
+def post_reel(session_file, path, caption):
+    cl = get_client(session_file)
     cl.clip_upload(path, caption)
-    print("✅ Reel posted")
+    print(f"✅ Reel posted from {session_file}")
 
-def post_story(path):
+def post_story(session_file, path):
+    cl = get_client(session_file)
+
     if path.lower().endswith((".jpg", ".jpeg", ".png")):
         cl.photo_upload_to_story(path)
-        print("✅ Image story posted")
     else:
         cl.video_upload_to_story(path)
-        print("✅ Video story posted")
+
+    print(f"✅ Story posted from {session_file}")
 
 
-    
-    
-def post_image(path, caption):
-    cl.photo_upload(path, caption)
-    print("✅ Image posted")
+# -------- SAME TIME → DIFFERENT ACCOUNTS -------- #
 
-# -------- SCHEDULE JOBS -------- #
-
-from datetime import datetime
-
-
-# 5:40 PM
+# 11:25 PM – Account 3
 scheduler.add_job(
     post_image,
     'date',
-    run_date=datetime(2025, 12, 25, 17, 40),
-    args=["posts/img1.jpg", "🔥 5PM Image Post"]
+    run_date=datetime(2025, 12, 26, 12, 11),
+    args=["session_account3.json", "posts/img1.jpg", "🔥 Account 3 post"]
 )
 
-# 6:30 PM
+# 11:25 PM – Account 4
+scheduler.add_job(
+    post_image,
+    'date',
+    run_date=datetime(2025, 12, 26, 12, 12),
+    args=["session_account4.json", "posts/img1.jpg", "🔥 Account 4 post"]
+)
+
+# 12:00 PM – Reel (Account 3)
 scheduler.add_job(
     post_reel,
     'date',
-    run_date=datetime(2025, 12, 25, 18, 30),
-    args=["posts/reel1.mp4", "🚀 6:30 PM reel"]
+    run_date=datetime(2025, 12, 26, 12, 15),
+    args=["session_account3.json", "posts/reel1.mp4", "🚀 Reel"]
 )
 
+# 12:00 PM – Reel (Account 4)
+scheduler.add_job(
+    post_reel,
+    'date',
+    run_date=datetime(2025, 12, 26, 12, 16),
+    args=["session_account4.json", "posts/reel1.mp4", "🚀 Reel"]
+)
 
-# 8:00 PM
+# 12:10 PM – Story (Account 3)
 scheduler.add_job(
     post_story,
     'date',
-    run_date=datetime(2025, 12, 25, 20, 17),
-    args=["posts/story.mp4"]
+    run_date=datetime(2025, 12, 26, 12, 20),
+    args=["session_account3.json", "posts/story.mp4"]
 )
 
-# 9:00 PM
+# 12:10 PM – Story (Account 4)
 scheduler.add_job(
-    post_image,
+    post_story,
     'date',
-    run_date=datetime(2025, 12, 25, 20, 30),
-    args=["posts/img2.jpg", "🌙 9PM post"]
+    run_date=datetime(2025, 12, 26, 12, 21),
+    args=["session_account4.json", "posts/story.mp4"]
 )
-
-
 
 print("⏰ Scheduler started...")
 scheduler.start()
