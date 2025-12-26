@@ -2,42 +2,79 @@ from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 from instagrapi import Client
 
+from utils.watermark_image import add_watermark_to_image
+from utils.watermark_video import add_story_watermark
+
+
+
+from caption_hashtag import generate_caption, generate_hashtags
+
 scheduler = BlockingScheduler()
+
 
 def get_client(session_file):
     cl = Client()
     cl.load_settings(session_file)
 
     try:
-        cl.get_timeline_feed()   # 🔥 SESSION REFRESH
+        cl.get_timeline_feed()
     except:
         raise Exception(f"❌ Session expired: {session_file}")
 
     return cl
 
 
-# -------- POST FUNCTIONS (PER ACCOUNT) -------- #
-
-
-def post_image(session_file, path, caption):
+# -------- IMAGE POST --------
+def post_image(session_file, image_path):
     cl = get_client(session_file)
-    cl.photo_upload(path, caption)
-    print(f"✅ Image posted from {session_file}")
+    username = cl.account_info().username
 
-def post_reel(session_file, path, caption):
+    caption = f"""{generate_caption(username)}
+
+{generate_hashtags()}
+"""
+
+    watermarked = add_watermark_to_image(image_path, f"@{username}")
+    cl.photo_upload(watermarked, caption)
+
+    print(f"✅ Image posted for {username}")
+
+
+# -------- REEL POST --------
+def post_reel(session_file, video_path):
     cl = get_client(session_file)
-    cl.clip_upload(path, caption)
-    print(f"✅ Reel posted from {session_file}")
+    username = cl.account_info().username
+
+    caption = f"""{generate_caption(username)}
+
+{generate_hashtags()}
+"""
+
+    wm_video = add_story_watermark(
+        video_path,
+        f"@{username}"
+    )
+
+    cl.clip_upload(wm_video, caption)
+    print("✅ Reel posted with caption + hashtags + watermark")
+
+# -------- STORY POST --------
+
+from utils.watermark_video import add_story_watermark
 
 def post_story(session_file, path):
     cl = get_client(session_file)
+    username = cl.account_info().username
 
-    if path.lower().endswith((".jpg", ".jpeg", ".png")):
-        cl.photo_upload_to_story(path)
+    if path.lower().endswith((".jpg", ".png")):
+        wm_img = add_watermark_to_image(path, f"@{username}")
+        cl.photo_upload_to_story(wm_img)
     else:
-        cl.video_upload_to_story(path)
+        wm_video = add_story_watermark(path, f"@{username}")
+        cl.video_upload_to_story(wm_video)
 
-    print(f"✅ Story posted from {session_file}")
+    print("✅ Story posted WITH SOUND + watermark")
+
 
 
 # -------- SAME TIME → DIFFERENT ACCOUNTS -------- #
@@ -46,39 +83,61 @@ def post_story(session_file, path):
 scheduler.add_job(
     post_image,
     'date',
-    run_date=datetime(2025, 12, 26, 12, 11),
-    args=["session_account3.json", "posts/img1.jpg", "🔥 Account 3 post"]
+    run_date=datetime(2025, 12, 26, 22, 10),
+    args=["session_account3.json", "posts/img2.jpg"]
+
 )
 
 # 11:25 PM – Account 4
 scheduler.add_job(
     post_image,
     'date',
-    run_date=datetime(2025, 12, 26, 12, 12),
-    args=["session_account4.json", "posts/img1.jpg", "🔥 Account 4 post"]
+    run_date=datetime(2025, 12, 26, 22, 11 ),
+    args=["session_account4.json", "posts/img2.jpg"]
+
+)
+
+# 11:25 PM – Account 4
+scheduler.add_job(
+    post_image,
+    'date',
+    run_date=datetime(2025, 12, 26, 22, 12),
+    args=["session_account5.json", "posts/img2.jpg"]
+
 )
 
 # 12:00 PM – Reel (Account 3)
 scheduler.add_job(
     post_reel,
     'date',
-    run_date=datetime(2025, 12, 26, 12, 15),
-    args=["session_account3.json", "posts/reel1.mp4", "🚀 Reel"]
+    run_date=datetime(2025, 12, 26, 22, 15),
+    args=["session_account3.json", "posts/reel2.mp4"]
+
 )
 
 # 12:00 PM – Reel (Account 4)
 scheduler.add_job(
     post_reel,
     'date',
-    run_date=datetime(2025, 12, 26, 12, 16),
-    args=["session_account4.json", "posts/reel1.mp4", "🚀 Reel"]
+    run_date=datetime(2025, 12, 26, 22, 16),
+    args=["session_account4.json", "posts/reel2.mp4"]
+
+)
+
+# 12:00 PM – Reel (Account 4)
+scheduler.add_job(
+    post_reel,
+    'date',
+    run_date=datetime(2025, 12, 26, 22, 17),
+    args=["session_account5.json", "posts/reel2.mp4"]
+
 )
 
 # 12:10 PM – Story (Account 3)
 scheduler.add_job(
     post_story,
     'date',
-    run_date=datetime(2025, 12, 26, 12, 20),
+    run_date=datetime(2025, 12, 26, 22, 20),
     args=["session_account3.json", "posts/story.mp4"]
 )
 
@@ -86,8 +145,16 @@ scheduler.add_job(
 scheduler.add_job(
     post_story,
     'date',
-    run_date=datetime(2025, 12, 26, 12, 21),
+    run_date=datetime(2025, 12, 26, 22, 21),
     args=["session_account4.json", "posts/story.mp4"]
+)
+
+# 12:10 PM – Story (Account 4)
+scheduler.add_job(
+    post_story,
+    'date',
+    run_date=datetime(2025, 12, 26, 22, 22),
+    args=["session_account5.json", "posts/story.mp4"]
 )
 
 print("⏰ Scheduler started...")
