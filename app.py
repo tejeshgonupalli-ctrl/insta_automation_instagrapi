@@ -395,28 +395,39 @@ post_now = col1.button("🚀 Post Now")
 schedule_later = col2.button("📅 Schedule Later")
 
 # ---------------- POST NOW ----------------
+import time
+import shutil
+from auto_scheduler import post_image, post_reel, post_story
+
 if post_now and uploaded_file:
-    from auto_scheduler import post_image, post_reel, post_story
-    import threading
 
-    def run_post_for_account(acc):
+    for i, acc in enumerate(selected_accounts):
         session = acc["session_file"]
+        username = acc["username"]
 
-        if post_type == "Image":
-            post_image(session, str(file_path))
-        elif post_type == "Reel":
-            post_reel(session, str(file_path))
-        else:
-            post_story(session, str(file_path))
+        try:
+            # 🔥 IMPORTANT: create UNIQUE reel per account
+            unique_path = file_path.with_name(
+                f"{file_path.stem}_{username}{file_path.suffix}"
+            )
+            shutil.copy(file_path, unique_path)
 
-    for acc in selected_accounts:
-        threading.Thread(
-            target=run_post_for_account,
-            args=(acc,),
-            daemon=True
-        ).start()
+            if post_type == "Image":
+                post_image(session, str(unique_path), username)
 
-    st.success("🚀 Post started for ALL selected accounts")
+            elif post_type == "Reel":
+                post_reel(session, str(unique_path), username)
+
+                # ⏳ VERY IMPORTANT delay
+                time.sleep(60)
+
+            else:
+                post_story(session, str(unique_path), username)
+
+            st.success(f"✅ Posted to @{username}")
+
+        except Exception as e:
+            st.error(f"❌ Failed for @{username}: {e}")
 
 
 
