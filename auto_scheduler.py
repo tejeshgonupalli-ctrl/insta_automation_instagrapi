@@ -6,7 +6,13 @@ from caption_hashtag import generate_caption_and_hashtags
 def get_client(session_file):
     cl = Client()
     cl.load_settings(session_file)
-    cl.login_by_sessionid(cl.sessionid)
+
+    try:
+        # ✅ This is mandatory for REELS
+        cl.get_timeline_feed()
+    except Exception as e:
+        raise Exception(f"❌ Session expired / blocked: {session_file}\n{e}")
+
     return cl
 
 

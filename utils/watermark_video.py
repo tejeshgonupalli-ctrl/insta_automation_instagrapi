@@ -45,7 +45,8 @@ Dialogue: 0,0:00:00.00,9:59:59.00,WM,,0,0,0,,{{\\pos(360,1150)\\frz0\\t(0,3000,\
             "-c:v", "libx264",
             "-preset", "fast",
             "-pix_fmt", "yuv420p",
-            "-c:a", "copy",
+            "-c:a", "aac",
+            "-b:a", "128k",
             output_path
         ]
     else:
@@ -58,7 +59,8 @@ Dialogue: 0,0:00:00.00,9:59:59.00,WM,,0,0,0,,{{\\pos(360,1150)\\frz0\\t(0,3000,\
             "-c:v", "libx264",
             "-preset", "fast",
             "-pix_fmt", "yuv420p",
-            "-c:a", "copy",
+            "-c:a", "aac",
+            "-b:a", "128k",
             output_path
         ]
 

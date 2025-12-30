@@ -355,14 +355,18 @@ if not accounts:
     st.warning("⚠️ Add at least one account")
     st.stop()
 
-selected_username = st.selectbox(
-    "Post from account",
-    [a["username"] for a in accounts]
+st.subheader("👥 Select Accounts (Multiple)")
+
+selected_accounts = st.multiselect(
+    "Choose accounts to post",
+    options=accounts,
+    format_func=lambda x: x["username"]
 )
 
-selected_account = next(
-    a for a in accounts if a["username"] == selected_username
-)
+if not selected_accounts:
+    st.warning("⚠️ At least one account select cheyyali")
+    st.stop()
+
 
 # ---------------- CREATE POST ----------------
 st.divider()
@@ -395,9 +399,9 @@ if post_now and uploaded_file:
     from auto_scheduler import post_image, post_reel, post_story
     import threading
 
-    session = selected_account["session_file"]
+    def run_post_for_account(acc):
+        session = acc["session_file"]
 
-    def run_post():
         if post_type == "Image":
             post_image(session, str(file_path))
         elif post_type == "Reel":
@@ -405,8 +409,14 @@ if post_now and uploaded_file:
         else:
             post_story(session, str(file_path))
 
-    threading.Thread(target=run_post, daemon=True).start()
-    st.success("✅ Post started in background")
+    for acc in selected_accounts:
+        threading.Thread(
+            target=run_post_for_account,
+            args=(acc,),
+            daemon=True
+        ).start()
+
+    st.success("🚀 Post started for ALL selected accounts")
 
 
 
@@ -415,25 +425,27 @@ if schedule_later and uploaded_file:
     date = st.date_input("Select date")
     time = st.time_input("Select time")
 
-    job = {
-        "id": uuid.uuid4().hex,
-        "username": selected_username,
-        "session_file": selected_account["session_file"],
-        "post_type": post_type.lower(),
-        "media_path": str(file_path),
-        "caption": caption,
-        "run_at": datetime.combine(date, time).isoformat()
-    }
+    run_at = datetime.combine(date, time).isoformat()
 
     jobs = []
     if Path(JOBS_FILE).exists():
         jobs = json.loads(Path(JOBS_FILE).read_text())
 
-    jobs.append(job)
+    for acc in selected_accounts:
+        job = {
+            "id": uuid.uuid4().hex,
+            "username": acc["username"],
+            "session_file": acc["session_file"],
+            "post_type": post_type.lower(),
+            "media_path": str(file_path),
+            "caption": caption,
+            "run_at": run_at,
+            "status": "pending"
+        }
+        jobs.append(job)
+
     Path(JOBS_FILE).write_text(json.dumps(jobs, indent=2))
-
-    st.success("📅 Post scheduled")
-
+    st.success("📅 Scheduled for ALL selected accounts")
 
 
 # st.markdown("### 🔍 Fetch Instagram Posts")
