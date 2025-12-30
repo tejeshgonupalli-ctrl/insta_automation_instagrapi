@@ -1,19 +1,105 @@
-from apscheduler.schedulers.blocking import BlockingScheduler
+import time
+import json
 from datetime import datetime
+from pathlib import Path
+
 from auto_scheduler import post_image, post_reel, post_story
 
-scheduler = BlockingScheduler()
+JOBS_FILE = Path("scheduled_jobs.json")
 
-scheduler.add_job(
-    post_image,
-    'date',
-    run_date=datetime(2025, 12, 28, 19, 30),
-    args=["session_account3.json", "posts/img4.jpg"]
-)
+print("⏰ Scheduler Runner started...")
+print("📂 Watching:", JOBS_FILE.resolve())
 
-print("⏰ Scheduler started...")
-scheduler.start()
 
+def get_run_time(job):
+    """
+    Backward compatible scheduler time reader
+    Supports both:
+    - scheduled_time (new)
+    - run_at (old)
+    """
+    run_at = job.get("scheduled_time") or job.get("run_at")
+    if not run_at:
+        return None
+    return datetime.fromisoformat(run_at)
+
+
+while True:
+    try:
+        if not JOBS_FILE.exists():
+            time.sleep(5)
+            continue
+
+        jobs = json.loads(JOBS_FILE.read_text())
+        now = datetime.now()
+        changed = False
+
+        for job in jobs:
+            # Only pending jobs
+            if job.get("status") != "pending":
+                continue
+
+            run_at = get_run_time(job)
+
+            if run_at is None:
+                job["status"] = "failed"
+                job["last_error"] = "Missing scheduled_time / run_at"
+                changed = True
+                continue
+
+            if now >= run_at:
+                print(f"🚀 Running job for @{job['username']}")
+
+                # mark as running first
+                job["status"] = "running"
+                JOBS_FILE.write_text(json.dumps(jobs, indent=2))
+
+                try:
+                    if job["post_type"] == "image":
+                        post_image(
+                            job["session_file"],
+                            job["media_path"],
+                            job["username"]
+                        )
+
+                    elif job["post_type"] == "reel":
+                        post_reel(
+                            job["session_file"],
+                            job["media_path"],
+                            job["username"]
+                        )
+                        time.sleep(60)  # anti-ban delay
+
+                    elif job["post_type"] == "story":
+                        post_story(
+                            job["session_file"],
+                            job["media_path"],
+                            job["username"]
+                        )
+
+                    else:
+                        raise Exception(f"Unknown post_type: {job['post_type']}")
+
+                    job["status"] = "done"
+                    print(f"✅ Done for @{job['username']}")
+                    changed = True
+
+                except Exception as e:
+                    job["status"] = "failed"
+                    job["last_error"] = str(e)
+                    print(f"❌ Failed for @{job['username']}: {e}")
+                    changed = True
+
+                # Save after each job
+                JOBS_FILE.write_text(json.dumps(jobs, indent=2))
+
+        if changed:
+            JOBS_FILE.write_text(json.dumps(jobs, indent=2))
+
+    except Exception as e:
+        print("❌ Scheduler loop error:", e)
+
+    time.sleep(5)
 
 # # ======================================
 # # ADVANCED SCHEDULER (OPTIMIZED & STABLE)

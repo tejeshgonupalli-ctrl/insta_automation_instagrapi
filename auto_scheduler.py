@@ -50,11 +50,9 @@ def post_reel(session_file, video_path, username=None):
     cl.clip_upload(wm_video, caption)
 
 
-def post_story(session_file, path, username=None):
+def post_story(session_file, path):
     cl = get_client(session_file)
-
-    if username is None:
-        username = cl.account_info().username
+    username = cl.account_info().username
 
     if path.lower().endswith((".jpg", ".png")):
         wm = add_watermark_to_image(path, f"@{username}")
@@ -62,7 +60,6 @@ def post_story(session_file, path, username=None):
     else:
         wm_video = add_story_watermark(path, f"@{username}")
         cl.video_upload_to_story(wm_video)
-
 
 
 # from datetime import datetime

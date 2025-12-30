@@ -320,7 +320,7 @@ JOBS_FILE = "scheduled_jobs.json"
 UPLOAD_DIR = Path("posts/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-st.set_page_config(page_title="Instagram Automation", layout="centered")
+# st.set_page_config(page_title="Instagram Automation", layout="centered")
 
 st.title("📸 Instagram Automation Panel")
 
@@ -426,10 +426,44 @@ if uploaded_file:
         f.write(uploaded_file.getbuffer())
     st.success("📂 Media uploaded")
 
+# ---------------- SCHEDULE POST ----------------
+st.divider()
+st.subheader("⏰ Schedule Post")
+
+with st.form("schedule_form"):
+    date = st.date_input("📅 Select date")
+    time_ = st.time_input("⏰ Select time")
+    submit_schedule = st.form_submit_button("📅 Schedule Later")
+
+if submit_schedule and uploaded_file:
+    run_at = datetime.combine(date, time_).isoformat()
+
+    jobs = []
+    if Path(JOBS_FILE).exists():
+        jobs = json.loads(Path(JOBS_FILE).read_text())
+
+    for acc in selected_accounts:
+        job = {
+            "id": uuid.uuid4().hex,
+            "username": acc["username"],
+            "session_file": acc["session_file"],
+            "post_type": post_type.lower(),
+            "media_path": str(file_path),
+            "scheduled_time": run_at,
+            "status": "pending"
+        }
+        jobs.append(job)
+
+    Path(JOBS_FILE).write_text(json.dumps(jobs, indent=2))
+
+    st.success("✅ Scheduled successfully")
+    st.info("ℹ️ Scheduler runner will post automatically")
+
 # ---------------- ACTION BUTTONS ----------------
-col1, col2 = st.columns(2)
-post_now = col1.button("🚀 Post Now")
-schedule_later = col2.button("📅 Schedule Later")
+# col1, col2 = st.columns(2)
+post_now = st.button("🚀 Post Now")
+
+# schedule_later = col2.button("📅 Schedule Later")
 
 # ---------------- POST NOW ----------------
 import time
@@ -469,32 +503,32 @@ if post_now and uploaded_file:
 
 
 # ---------------- SCHEDULE LATER ----------------
-if schedule_later and uploaded_file:
-    date = st.date_input("Select date")
-    time = st.time_input("Select time")
+# if schedule_later and uploaded_file:
+#     date = st.date_input("Select date")
+#     time_ = st.time_input("Select time")
 
-    run_at = datetime.combine(date, time).isoformat()
+#     run_at = datetime.combine(date, time_).isoformat()
 
-    jobs = []
-    if Path(JOBS_FILE).exists():
-        jobs = json.loads(Path(JOBS_FILE).read_text())
+#     jobs = []
+#     if Path(JOBS_FILE).exists():
+#         jobs = json.loads(Path(JOBS_FILE).read_text())
 
-    for acc in selected_accounts:
-        job = {
-            "id": uuid.uuid4().hex,
-            "username": acc["username"],
-            "session_file": acc["session_file"],
-            "post_type": post_type.lower(),
-            "media_path": str(file_path),
-            "caption": caption,
-            "run_at": run_at,
-            "status": "pending"
-        }
-        jobs.append(job)
+#     for acc in selected_accounts:
+#         job = {
+#             "id": uuid.uuid4().hex,
+#             "username": acc["username"],
+#             "session_file": acc["session_file"],
+#             "post_type": post_type.lower(),
+#             "media_path": str(file_path),
+#             "run_at": run_at,
+#             "status": "pending"
+#         }
+#         jobs.append(job)
 
-    Path(JOBS_FILE).write_text(json.dumps(jobs, indent=2))
-    st.success("📅 Scheduled for ALL selected accounts")
+#     Path(JOBS_FILE).write_text(json.dumps(jobs, indent=2))
 
+#     st.success("📅 Scheduled successfully")
+#     st.info("ℹ️ Scheduler runner will pick this job automatically")
 
 # st.markdown("### 🔍 Fetch Instagram Posts")
 
