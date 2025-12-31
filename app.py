@@ -322,7 +322,7 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # st.set_page_config(page_title="Instagram Automation", layout="centered")
 
-st.title("📸 Instagram Automation Panel")
+# st.title("📸 Instagram Automation Panel")
 
 # ---------------- LOAD ACCOUNTS ----------------
 if Path(ACCOUNTS_FILE).exists():
@@ -331,21 +331,21 @@ else:
     accounts = []
 
 # ---------------- ADD ACCOUNT ----------------
-st.subheader("🔐 Add Instagram Account")
+# st.subheader("🔐 Add Instagram Account")
 
-username = st.text_input("Instagram Username")
-session_file = st.text_input("Session File (example: session_account1.json)")
+# username = st.text_input("Instagram Username")
+# session_file = st.text_input("Session File (example: session_account1.json)")
 
-if st.button("➕ Add Account"):
-    if username and session_file:
-        accounts.append({
-            "username": username,
-            "session_file": session_file
-        })
-        Path(ACCOUNTS_FILE).write_text(json.dumps(accounts, indent=2))
-        st.success("✅ Account added")
-    else:
-        st.error("❌ Fill both fields")
+# if st.button("➕ Add Account"):
+#     if username and session_file:
+#         accounts.append({
+#             "username": username,
+#             "session_file": session_file
+#         })
+#         Path(ACCOUNTS_FILE).write_text(json.dumps(accounts, indent=2))
+#         st.success("✅ Account added")
+#     else:
+#         st.error("❌ Fill both fields")
 
 
 st.divider()
@@ -386,7 +386,7 @@ if st.button("🔐 Create Session File"):
 
 # ---------------- SELECT ACCOUNT ----------------
 st.divider()
-st.subheader("👤 Select Account")
+# st.subheader("👤 Select Account")
 
 if not accounts:
     st.warning("⚠️ Add at least one account")
