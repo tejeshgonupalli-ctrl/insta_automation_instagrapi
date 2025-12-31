@@ -1,0 +1,23 @@
+
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV
+
+; 🔹 Moving watermark (slow, visible, not disturbing)
+Style: MOVE,Arial,48,&H55FFFFFF,&H80000000,&H00000000,0,0,1,2,1,5,20,20,60
+
+; 🔹 Static centre watermark (anti-theft, high transparency)
+Style: STATIC,Arial,64,&H25FFFFFF,&H80000000,&H00000000,0,0,1,1,0,5,20,20,20
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+
+; 🔁 Moving watermark – slow rotation (12 seconds per round)
+Dialogue: 0,0:00:00.00,9:59:59.00,MOVE,,0,0,0,,{\pos(540,1750)\frz0\t(0,12000,\frz360)}@tej1.267
+
+; 🔒 Static centre watermark – anti-theft
+Dialogue: 1,0:00:00.00,9:59:59.00,STATIC,,0,0,0,,{\pos(540,960)}@tej1.267

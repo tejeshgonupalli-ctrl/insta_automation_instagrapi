@@ -426,30 +426,39 @@ file_path = None
 auto_caption = ""
 
 # 🔹 CASE 1: Reel URL pasted
+# 🔹 CASE 1: Instagram URL pasted (Reel / Image / Carousel)
 if reel_url:
-    st.info("⬇️ Downloading reel from link...")
+    st.info("⬇️ Downloading media from Instagram link...")
 
     try:
-        from utils.reel_downloader import download_reel_from_url
+        from utils.reel_downloader import download_media_from_url
 
-        # Use first selected account session ONLY for download
+        # Use first selected account ONLY for downloading
         session_file = selected_accounts[0]["session_file"]
 
-        result = download_reel_from_url(
-        reel_url,
-        session_file
-    )
-        
-        result = download_reel_from_url(reel_url, session_file)
-        file_path = result[0]
-        auto_caption = result[1]
+        media_files, auto_caption, detected_type = download_media_from_url(
+            reel_url,
+            session_file
+        )
 
-        st.success("✅ Reel downloaded successfully")
-        st.video(file_path)
+        # 🔥 Use first media as primary file
+        file_path = media_files[0]
+
+        # 🔥 Auto set post type
+        post_type = detected_type.capitalize()
+
+        st.success(f"✅ {post_type} downloaded successfully")
+
+        # Preview
+        if str(file_path).lower().endswith(".mp4"):
+            st.video(file_path)
+        else:
+            st.image(file_path)
 
     except Exception as e:
-        st.error(f"❌ Failed to download reel: {e}")
+        st.error(f"❌ Failed to download Instagram link: {e}")
         st.stop()
+
 
 # 🔹 CASE 2: Normal file upload
 elif uploaded_file:

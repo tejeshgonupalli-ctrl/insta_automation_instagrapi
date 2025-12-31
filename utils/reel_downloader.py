@@ -4,47 +4,110 @@ from instagrapi import Client
 from pathlib import Path
 
 
-def download_reel_from_url(reel_url, session_file):
+def _get_image_url(obj):
+    # Version-safe image URL
+    if hasattr(obj, "image_versions2"):
+        return obj.image_versions2.candidates[0].url
+    if hasattr(obj, "thumbnail_url"):
+        return obj.thumbnail_url
+    raise Exception("Image URL not found")
+
+
+def download_media_from_url(insta_url, session_file):
     """
-    100% SAFE reel downloader
-    (does NOT use instagrapi.video_download)
+    FINAL, version-safe downloader
+    Supports:
+    - Reel
+    - Image post
+    - Carousel (ALL images/videos)
 
     Returns:
-        video_path (str)
+        media_paths (list[str])
         caption (str)
+        post_type (str)
     """
 
     cl = Client()
     cl.load_settings(session_file)
 
-    # Extract shortcode
-    match = re.search(r"/reel/([A-Za-z0-9_-]+)/?", reel_url)
+    match = re.search(r"/(reel|p)/([A-Za-z0-9_-]+)/?", insta_url)
     if not match:
-        raise ValueError("Invalid Instagram Reel URL")
+        raise ValueError("Invalid Instagram URL")
 
-    shortcode = match.group(1)
+    shortcode = match.group(2)
 
     media_pk = cl.media_pk_from_code(shortcode)
     media = cl.media_info(media_pk)
 
-    video_url = media.video_url
     caption = media.caption_text or ""
-
-    if not video_url:
-        raise Exception("Could not fetch video URL")
 
     output_dir = Path("posts/uploads")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    video_path = output_dir / f"reel_{shortcode}.mp4"
+    files = []
 
-    # 🔥 MANUAL DOWNLOAD (NO instagrapi bug)
-    response = requests.get(video_url, stream=True, timeout=60)
-    response.raise_for_status()
+    # ---------------- REEL ----------------
+    if media.media_type == 2:
+        video_path = output_dir / f"{shortcode}.mp4"
+        r = requests.get(media.video_url, stream=True, timeout=60)
+        r.raise_for_status()
+        with open(video_path, "wb") as f:
+            for c in r.iter_content(1024 * 1024):
+                if c:
+                    f.write(c)
 
-    with open(video_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=1024 * 1024):
-            if chunk:
-                f.write(chunk)
+        return [str(video_path)], caption, "reel"
 
-    return str(video_path), caption
+    # ---------------- SINGLE IMAGE ----------------
+    if media.media_type == 1:
+        img_path = output_dir / f"{shortcode}.jpg"
+        r = requests.get(_get_image_url(media), stream=True, timeout=60)
+        r.raise_for_status()
+        with open(img_path, "wb") as f:
+            for c in r.iter_content(1024 * 1024):
+                if c:
+                    f.write(c)
+
+        return [str(img_path)], caption, "image"
+
+    # ---------------- 🔥 CAROUSEL (IMPORTANT FIX) ----------------
+    if media.media_type == 8:
+        carousel_items = []
+
+        # ✅ MOST RELIABLE SOURCE
+        if hasattr(media, "carousel_media") and media.carousel_media:
+            carousel_items = media.carousel_media
+        elif hasattr(media, "resources") and media.resources:
+            carousel_items = media.resources
+        else:
+            raise Exception("Carousel items not found")
+
+        for i, item in enumerate(carousel_items):
+            # IMAGE
+            if item.media_type == 1:
+                img_path = output_dir / f"{shortcode}_{i}.jpg"
+                r = requests.get(_get_image_url(item), stream=True, timeout=60)
+                r.raise_for_status()
+                with open(img_path, "wb") as f:
+                    for c in r.iter_content(1024 * 1024):
+                        if c:
+                            f.write(c)
+                files.append(str(img_path))
+
+            # VIDEO
+            elif item.media_type == 2:
+                vid_path = output_dir / f"{shortcode}_{i}.mp4"
+                r = requests.get(item.video_url, stream=True, timeout=60)
+                r.raise_for_status()
+                with open(vid_path, "wb") as f:
+                    for c in r.iter_content(1024 * 1024):
+                        if c:
+                            f.write(c)
+                files.append(str(vid_path))
+
+        if len(files) <= 1:
+            raise Exception("Carousel detected but only one media downloaded")
+
+        return files, caption, "carousel"
+
+    raise Exception("Unsupported Instagram media type")
