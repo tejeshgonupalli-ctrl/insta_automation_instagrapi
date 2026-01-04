@@ -1,7 +1,13 @@
 import os
+from dotenv import load_dotenv
 from groq import Groq
 
+# ✅ LOAD .env FILE
+load_dotenv()
+
+# ✅ CREATE CLIENT
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
 
 
 def generate_caption_and_hashtags(username, original_text):
