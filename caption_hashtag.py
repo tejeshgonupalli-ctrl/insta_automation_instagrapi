@@ -9,6 +9,7 @@ load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
+
 def generate_caption_and_hashtags(username, original_text):
     prompt = f"""
 Create an Instagram caption and hashtags.
